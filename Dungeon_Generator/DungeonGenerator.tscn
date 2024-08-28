@@ -1,0 +1,19 @@
+[gd_scene load_steps=4 format=3 uid="uid://dfi4v2j7maull"]
+
+[ext_resource type="Script" path="res://Dungeon_Generator/DungeonGenerator.gd" id="1_obnb2"]
+[ext_resource type="TileSet" uid="uid://c1k4faoyedgey" path="res://DungeonTilesTileSet-AutoTiled.tres" id="2_ux4h7"]
+[ext_resource type="PackedScene" uid="uid://da8r1pmulohsg" path="res://Camera Scene/Camera.tscn" id="3_8r60s"]
+
+[node name="Dungeon Generator" type="Node2D" node_paths=PackedStringArray("Map", "rooms_container")]
+script = ExtResource("1_obnb2")
+Map = NodePath("TileMapLayer")
+rooms_container = NodePath("RoomsContainer")
+debug_mode = true
+
+[node name="RoomsContainer" type="Node2D" parent="."]
+
+[node name="TileMapLayer" type="TileMapLayer" parent="."]
+show_behind_parent = true
+tile_set = ExtResource("2_ux4h7")
+
+[node name="Camera2D" parent="." instance=ExtResource("3_8r60s")]
