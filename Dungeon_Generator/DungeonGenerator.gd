@@ -34,13 +34,17 @@ var Room_tscn := preload("res://Dungeon_Generator/Room_Scene/room.tscn")
 ## percentage value of how many of the generated rooms to delete
 @export var cull: float = 0.5
 ## Horizontal spread of the rooms when generating
-@export var hspread: int = 100 # Horizontal spread
+@export var hspread: int = 100 
 #endregion
 
-var ordered_rooms: Array # left to right
+# Array that will hold the rooms organized from left to right with their connections
+var ordered_rooms: Array
+# for safety
 var is_generating: bool = false
 
+#region BetterTerrain
 var changeset: Dictionary = {}
+#endregion
 
 func _ready() -> void:
 	randomize()
@@ -58,9 +62,11 @@ func _process(delta: float) -> void:
 	
 	if debug_mode: queue_redraw()
 	
+#region BetterTerrain
 	if BetterTerrain.is_terrain_changeset_ready(changeset):
 		BetterTerrain.apply_terrain_changeset(changeset)
 		changeset = {}
+#endregion
 
 func _input(event: InputEvent) -> void:
 	if debug_mode:
@@ -81,7 +87,7 @@ func _input(event: InputEvent) -> void:
 ## Function that instanciates the rooms and adds them to the container
 func make_rooms() -> void:
 	is_generating = true
-	
+	# this is only needed if you wish to make more squared rooms
 	var rooms_size: Array = [min_size,max_size]
 	
 	for n in range(num_roms):
@@ -89,7 +95,10 @@ func make_rooms() -> void:
 		var pos := Vector2(randi_range(0,hspread),0)
 		
 		var r : dungeon_room = Room_tscn.instantiate()
-		
+		# if you want to make more variated shapes uncomment
+		# the lines bellow and delete the others along with the rooms_size array
+		#var w: int = min_size + randi() % (max_size - min_size)
+		#var h: int = min_size + randi() % (max_size - min_size)
 		var w: int = rooms_size.pick_random()
 		var h: int = rooms_size.pick_random()
 		
@@ -120,13 +129,15 @@ func make_map() -> void:
 	var topleft = Map.local_to_map(full_rect.position)
 	var bottomright = Map.local_to_map(full_rect.end)
 	
-	## BetterTerrain
+#region BetterTerrain
 	var update:Dictionary = {}
+#endregion
 	
 	for x in range(topleft.x,bottomright.x):
 		for y in range(topleft.y,bottomright.y):
-			## BetterTerrain
+#region BetterTerrain
 			update[Vector2i(x,y)] = 2
+#endregion
 			#Map.set_cell(Vector2(x,y),0,Vector2i(8,7))
 	
 	ordered_rooms = []
@@ -157,8 +168,9 @@ func make_map() -> void:
 		
 		for x in range(2,size.x-1):
 			for y in range(2,size.y-1):
-				## BetterTerrain
+#region BetterTerrain
 				update[Vector2i(x + ul.x,y + ul.y)] = 3
+#endregion
 				#Map.set_cell(Vector2(x + ul.x,y + ul.y),0,Vector2i(9,7))
 	
 	for i in connections:
@@ -166,12 +178,15 @@ func make_map() -> void:
 		var r2p = Map.local_to_map(i[1].position - i[1].size/2)
 		carve_path(r1p,r2p,update)
 	is_generating = false
+#region BetterTerrain
 	## BetterTerrain
 	changeset = BetterTerrain.create_terrain_changeset(Map,update)
+#endregion
 	await get_tree().process_frame
 
 ## Function responsible for carving a pathway with tiles from [param _pos1] to [param _pos2]
 func carve_path(_pos1:Vector2,_pos2:Vector2,_update:Dictionary) -> void:
+	# you can remove the _update parameter if you are not using BetterTerrain
 	var modifier_x = sign(_pos2.x - _pos1.x) # 1 -1
 	var modifier_y = sign(_pos2.y - _pos1.y) # 1 -1
 	
@@ -186,15 +201,17 @@ func carve_path(_pos1:Vector2,_pos2:Vector2,_update:Dictionary) -> void:
 		y_x = _pos1
 	
 	for row in range(_pos1.y,_pos2.y,modifier_y):
-	## BetterTerrain
+#region BetterTerrain
 		_update[Vector2i(y_x.x,row)] = 3
 		_update[Vector2i(y_x.x + modifier_x,row)] = 3
+#endregion
 		#Map.set_cell(Vector2(y_x.x,row),0,Vector2i(9,7))
 		#Map.set_cell(Vector2(y_x.x + modifier_y,row),0,Vector2i(9,7))
 	for col in range(_pos1.x,_pos2.x,modifier_x):
-	## BetterTerrain
+#region BetterTerrain
 		_update[Vector2i(col,x_y.y)] = 3
 		_update[Vector2i(col,x_y.y + modifier_y)] = 3
+#endregion
 		#Map.set_cell(Vector2(col,x_y.y),0,Vector2i(9,7))
 		#Map.set_cell(Vector2(col,x_y.y + modifier_y),0,Vector2i(9,7))
 
